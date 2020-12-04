@@ -1,0 +1,227 @@
+    QMap<QString, PORTSET>::const_iterator itDecl;
+    QMap<QString, int>::const_iterator itChoose;          //существующие варианты значения переменной
+
+    itDecl = m_DeclPortSettings.constFind(arg1.first);
+    if(itDecl != m_DeclPortSettings.end())
+    {
+        itChoose = itDecl.value().Choose.constFind(arg1.second);
+        {
+            if(itChoose != itDecl.value().Choose.end())
+            {
+                //arg1.second
+            }
+            else
+            {
+                //itDecl.value().Value;
+            }
+        }
+    }
+
+
+    QMap<QString, QString>::const_iterator itArg;  //найденный элемент в arg1
+    QMap<QString, QString>::const_iterator itDecl;  //элементы m_DeclDBSettings
+    for (itDecl = m_DeclDBSettings.constBegin(); itDecl != m_DeclDBSettings.constEnd(); ++itDecl)
+    {
+        itArg = arg1.constFind(itDecl.key());
+        if(itArg != arg1.constEnd()) m_DBSettings.insert(itArg.key(), itArg.value());
+        else m_DBSettings.insert(itDecl.key(), itDecl.value());
+    }
+
+    emit SendClearDBSettings(m_DBSettings);
+
+
+    QMap<QString, QString>::const_iterator itArg;  //найденный элемент в arg1
+    QMap<QString, QString>::const_iterator itDecl;  //элементы m_MeterSettings
+    for (itDecl = m_DeclMeterSettings.constBegin(); itDecl != m_DeclMeterSettings.constEnd(); ++itDecl)
+    {
+        itArg = arg1.constFind(itDecl.key());
+        if(itArg != arg1.constEnd()) m_MeterSettings.insert(itArg.key(), itArg.value());
+        else m_MeterSettings.insert(itDecl.key(), itDecl.value());
+    }
+
+    emit SendClearMeterSettings(m_MeterSettings);
+
+
+//    if(0 <= m_MeterSettings["METER/RepeatTimes"].toInt() && m_MeterSettings["METER/RepeatTimes"].toInt() <= REPEATLIMIT)
+//        ui->spinMeterRepeat->setValue(m_MeterSettings["METER/RepeatTimes"].toInt());
+//    else
+//        ui->spinMeterRepeat->setValue(REPEATLIMIT);
+//    if(MINACCESSLEVEL <= m_MeterSettings["METER/AccessLevel"].toInt() && m_MeterSettings["METER/AccessLevel"].toInt() <= MAXACCESSLEVEL)
+//        ui->spinMeterAccessLevelDef->setValue(m_MeterSettings["METER/AccessLevel"].toInt());
+//    else
+//        ui->spinMeterAccessLevelDef->setValue(MINACCESSLEVEL);
+
+//    ui->spinMeterPasswordB1Def->setValue(m_MeterSettings["METER/PasswordBYTE1"].toInt() & 255);
+//    ui->spinMeterPasswordB2Def->setValue(m_MeterSettings["METER/PasswordBYTE2"].toInt() & 255);
+//    ui->spinMeterPasswordB3Def->setValue(m_MeterSettings["METER/PasswordBYTE3"].toInt() & 255);
+//    ui->spinMeterPasswordB4Def->setValue(m_MeterSettings["METER/PasswordBYTE4"].toInt() & 255);
+//    ui->spinMeterPasswordB5Def->setValue(m_MeterSettings["METER/PasswordBYTE5"].toInt() & 255);
+//    ui->spinMeterPasswordB6Def->setValue(m_MeterSettings["METER/PasswordBYTE6"].toInt() & 255);
+
+
+
+    foreach(const INIPORTSETTING iniportitem, m_DeclPortSettings)
+    {
+        itArg = arg1.constFind(iniportitem.Name);
+        if(itArg != arg1.constEnd())
+        {
+            if(iniportitem.Choose.size() > 0)
+            {
+                itChoose = iniportitem.Choose.constFind(itArg.value());
+                if(itChoose != iniportitem.Choose.constEnd())
+                {
+                    m_PortSettings.insert(itArg.key(), itArg.value());
+                }
+                else
+                {
+                    m_PortSettings.insert(itArg.key(), iniportitem.Value);
+                }
+            }
+            else
+            {
+                m_PortSettings.insert(itArg.key(), itArg.value());
+            }
+        }
+        else
+        {
+            m_PortSettings.insert(iniportitem.Name, iniportitem.Value);
+        }
+    }
+
+
+void ProgramSettings::RecvClearPortSettings(QMap<QString, QString> arg1)
+{
+    if(!m_PortSettingsSem)
+    {
+        m_PortSettings.clear();
+        QMap<QString, QString>::const_iterator it;
+        for (it = arg1.constBegin(); it != arg1.constEnd(); ++it) m_PortSettings.insert(it.key(), it.value());
+        m_PortSettingsSem = true;
+        OverWriteIni();
+    }
+}
+
+void ProgramSettings::RecvClearDBSettings(QMap<QString, QString> arg1)
+{
+    if(!m_DBSettingsSem)
+    {
+        m_DBSettings.clear();
+        QMap<QString, QString>::const_iterator it;
+        for (it = arg1.constBegin(); it != arg1.constEnd(); ++it) m_DBSettings.insert(it.key(), it.value());
+        m_DBSettingsSem = true;
+        OverWriteIni();
+    }
+}
+
+void ProgramSettings::RecvClearMeterSettings(QMap<QString, QString> arg1)
+{
+    if(!m_MeterSettingsSem)
+    {
+        m_MeterSettings.clear();
+        QMap<QString, QString>::const_iterator it;
+        for (it = arg1.constBegin(); it != arg1.constEnd(); ++it) m_MeterSettings.insert(it.key(), it.value());
+        m_MeterSettingsSem = true;
+        OverWriteIni();
+    }
+}
+
+void ProgramSettings::OverWriteIni()
+{
+    if(m_PortSettingsSem && m_DBSettingsSem && m_MeterSettingsSem)
+    {
+        this->clear();
+        this->beginGroup(m_PortGroupName);
+        QMap<QString, QString>::const_iterator itPort;
+        for (itPort = m_PortSettings.constBegin(); itPort != m_PortSettings.constEnd(); ++itPort) this->setValue(itPort.key(), itPort.value());
+        this->endGroup();
+        this->beginGroup(m_DBGroupName);
+        QMap<QString, QString>::const_iterator itDB;
+        for (itDB = m_DBSettings.constBegin(); itDB != m_DBSettings.constEnd(); ++itDB) this->setValue(itDB.key(), itDB.value());
+        this->endGroup();
+        this->beginGroup(m_MeterGroupName);
+        QMap<QString, QString>::const_iterator itMeter;
+        for (itMeter = m_MeterSettings.constBegin(); itMeter != m_MeterSettings.constEnd(); ++itMeter) this->setValue(itMeter.key(), itMeter.value());
+        this->endGroup();
+    }
+}
+
+
+
+
+    
+ 
+    itDecl = m_DeclPortSettings.constFind("BaudRate");
+    if(itDecl != m_DeclPortSettings.end())
+    {
+        for (itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose)
+        {
+            ui->comboPortBaudRate->addItem(itChoose.key());
+        }
+    }
+
+    itDecl = m_DeclPortSettings.constFind("DataBits");
+    if(itDecl != m_DeclPortSettings.end())
+    {
+        for (itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose)
+        {
+            ui->comboPortDataBits->addItem(itChoose.key());
+        }
+    }
+
+    itDecl = m_DeclPortSettings.constFind("Parity");
+    if(itDecl != m_DeclPortSettings.end())
+    {
+        for (itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose)
+        {
+            ui->comboPortParity->addItem(itChoose.key());
+        }
+    }
+
+    itDecl = m_DeclPortSettings.constFind("StopBits");
+    if(itDecl != m_DeclPortSettings.end())
+    {
+        for (itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose)
+        {
+            ui->comboPortStopBits->addItem(itChoose.key());
+        }
+    }
+
+    itDecl = m_DeclPortSettings.constFind("FlowControl");
+    if(itDecl != m_DeclPortSettings.end())
+    {
+        for (itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose)
+        {
+            ui->comboPortFlowControl->addItem(itChoose.key());
+        }
+    }
+
+
+//    QMap<QString, QString>::const_iterator itPort;
+//    for (itPort = m_PortSettings.constBegin(); itPort != m_PortSettings.constEnd(); ++itPort)
+//    {
+//    }
+
+# Sequence Diagram https://online.visual-paradigm.com/w/lglaojbi/diagrams/?lightbox=1&highlight=0000ff&edit=https%3A%2F%2Fonline.visual-paradigm.com%2Fw%2Flglaojbi%2Fdiagrams%2F%23diagram%3Aworkspace%3Dlglaojbi%26proj%3D0%26id%3D1&layers=1&nav=1&title=PowerMonSys#RU2FsdGVkX1%2FIS7xUQ9StE%2F5SihbJ5RhHuRpUM1F47EGpO242fB37tHABibBj7XHMqq2NOrvzCmWg%2FmCKabH99uGMaDDoskLZMhWId%2BmQYzkJJof%2Ba7aG9MP0c4TkCOk4RfjbjE4JVUGF9pubCJtueggEoxzK6zsRPIr4yEBSn9aHy%2F1KsLROGGGY0UnS5Ms9ytBwM9LlYe7bqjln8vpGZwKQh4i60eb7rRenX28K3tgwPi8Inhf8%2BaVP1cvISn0vx4d6ZZpRiEFak0iPHZzmpUTe9aX9RzvG7vSkKvQE7cwR%2BsKttS1c%2BMx1rZs9nwFuiGFpHkNmbBj%2BRIsNyX1wDOdgFz5zBVljde1X7k6F26ftaT%2Fx5wSSKavvGD%2FydZfb%2B9V1QFdL0rrW2xh6Vn9pQURP%2BMOOwty6kuiDm9im9TC84vqRnRQAO7kN9wwcgQCPzdZuvZsD5659V%2FzpgPHz%2BKIHjU4sJsLfsccRsK%2Fi%2F6YHCv%2F1Vw7vdXSq6%2F0JA0oJguzT5cVPZNvgQJKt1dL9qmO2dt%2Bp6DvyTLppuY4qkf3izCTbUh9FvZtSy78Pm12eAwymMLpBC0ZuJSKtSVwOMiUxihfhE2ofPBAGv6nH3Q2UgyXv5y3Wrqv%2FQbhbSuWn6pUgUfRMgPRs6CF49YEPwHR5jQ3xaJ%2B%2FQkCL8jPbc%2FJZTU%2Bme0xcFK2UXXNVcK6PMG2hLSz5R7JIr7OgLMfXVFOHRHb9yGrqn8iYBOOOUYZ%2F%2BjbPIKcxS01ehRuK%2F9nleaZgHBzqmxUjwVrg%2FyGBGJm%2BArxy0nYyi11n0ugwOlQm4qf4MDjkYiM2TO8dCka%2F%2Bi4iWOOxBO2qhgpd4Ls9c9mc2r0S6wLpcpDyHEm4QKYx7P8UVqwHTG4ziHX7CC6b7WnVj48dq77rbhP14sHIHWI3p29AfdaefeWd%2BaSrEc1gwLZ8ybrnWFAYidmh73MrHh51MLO9VTfJtddY1PZ4aobin7dFgtPI97vf1%2FI%2FVf1NIRRVwwUyL7Y7qn4iU6WmV34pWpLhc6FdQDy7MAA8yzn2HBhzwrmTpuCNuxP7xo8%2B6U0RTpQy7Oa7R6QLPKk5xmAFz0rTKfbvGV7gqSd6qomcIrz20THwfNDruHVvmyv0bMP5qbgxJPSf4QscdB6vScEOzXJjEb%2BtqAWz8FgfVlBuApjuhHS5I3lWcJBZFapdwDj3Sb6HOA79iD4m7FcnYplGDTFiR2Pz6cZ%2BuhcOtbT%2Fb6c62nBURNnLBPEu1UejnxxEooR2MQMEbmQB5yzEFazTrGmNVrCqzMgy033S0DMaM2EOPu70qV7YWB50STNNJoL0a4Rf1eDFXkQbVzLQLlhQ052x7NUQ%2ByL%2FUXekekqEEldcEDbgm9G6S89%2FQgcS8HD%2BU%2FuWdEnvZ7BzXRKrattYFRR50RTCaVMJATds6iJphDruHrq58gTYsmLSOc7bSgqUKjcnI7DABeLUQMStG1qz0xguh7BQjrBtzLeooIgP5GtUa9gZYgqxj4TYRDgFIQ%2BMqHW%2BhD25jdKlZ1YNxiNTe7JeC7Qu6PSRmOd8LUJ2AUpRa6UydtA9rObSeBAx1m5w%2BD2DDMzwy33UFSK2DOA4fHcQ7OVR7KR0hSAfDseMRpJtpgjaAxT1cJX0cHWxFxRKyIYFrW8NkGpIjTmiTafPOXUHNY0E75wp0sZjVKEPhPCZrSgmNyy7rmCXiQj44PmmfxuUgRAx7noe5%2B5%2FLdSQ7z8anrsqKRflpzbQq5zdwW5SnRD%2FvKsCnENIePJ%2Bhy8uQI79pVwqj%2ByqWphxOnPOCEbp7SFYaKeUynM6D%2BA6a4CvLyj6hV%2BdsohCPJUOiHBIe9P0ks%2FffDPcn%2BZOGuw9IJbtcwLSy5Knu0SuQ%2FAj8COvGSogDNCU%2Fw2El6Px6MuhZAXzYFS7w1%2FDDsQOfW6qbVIf4GgOggPMKRh2saLIKvLkBDzv2OvtO2cLZdjEYc%2Bo9VKsbIP2rwA%2BnXgaiNy2C%2Fp2MrDgDI96FrQ0An47tScOIM4juh2ZJLVbFwT90ZT7kBVca%2FYb20BuXmMB0%2Fgf3dWTx9xQ4k%2FYgQN1Gsmofcv4alnSbxf7zD4CEmI3dZunDO1vVQX%2BBtJHYkCrDYK2jIHsLFM7bscrT15fVXkBmiOm02Cbkx1L%2B3KTfAaFxYeFpVoMRz2UVTs7zLe2XYdVd5zv0hapi1k4m0woatzpzQjmRFZa0C7o3szzqm3JNI9DPbg%2FphJZzovnzFdi89o7zB%2FjYiQBaEzlDjB3UHtnMYeKFJ8o4d07xWVToaVCpNfKxRqV8pOs%2BUFuaiT4cUeM%2FFC1ZTeOkCQiBwIzd0zN8rSA%2BWxevgJEp1W3xOjSlD96doKZPDeIKUyaznlwL4SjKCfTh1cX3cmoxbQzQRwkbS6JCWqVSQU0c7%2BZOsQ7ds0mjKeul%2F8q1H15H734Jo%2FVOTKI5sELBkzeGa9raB%2Fu6OnfUCGcAZ0WcVXK7%2FdV3KHisGuL%2FSyLOjx1sAqShVIvjPU77W7lvUbPQEVC59IVcre90K5h5ZmP7jzzimoE5HHjdRfvPwKX6S7wwCR3Cy7tUJ8HVo0aQQdAxq%2B9uMLLmqhULXvNE6KikKlO6MFS1%2FyJ9VlnGwYnByuM9h%2B6WPBWbT0p%2F9lKhD0Bsa1xYa85qG1TkSN3BKLbs7fR6PCFG7fcvNlb53jYPRyx0wVl1AYwdDSmgYd4fVJxiIeaMlRyYqNPhs0d83PyUclrBaPJfsygzYXu7AHHZlU92lG97VHaDG201Xayr%2BYyonI1PWYOIMoS4i5pC3h792hlmDEWitKbmmxQeYH102ecE0wXl09z27HTr7%2BTcfdpmP%2BBIVJUOQqPXQAs12WFWv4VSpTzPvitulsA9FZNt6mihJP186JZ%2B8tka6BS%2BaGO%2FxjTBtSc5R1W%2F22eL1P2EG8ANDNA193FCL2zBXGWrETQAH5%2FUVwzx2LdLTpm20351iemulv4b0U6Deq71KQ%2BqYcT3XwlsnkhjDoCxgROrfg8zif%2FAGDH04TN3%2FwgTJ63bryx1hB0XbsYgPBP%2FodaJyizKMNXGcEl4jsNyz0Ig1N7BLbC2476%2B8l%2F8SIYKYjdMTXSrXrhzrx6OAw9iSoqXRu1y6OWUR4iOESR7AfjIjfab8T3%2FQBpLhjEN1Tn1%2BmO5wmhid7Eb25ksqQG%2BLZ040TiAw08RBMpwv7Y%2FENCGEvVUPA4kVg8g9HCuGlBFlZoD8Ffo%2FkdcwiSvlJEKM3moMXMScfKXRuKrV8xya2CJHe8gJ4PGd%2BuJFrMRYEEUvHHWfGKALwamKGDH8%2BVJl1hUePvMlZewPm6GK9nwx1gFLePeN49eKmAdA9Uhc5T0gF1eGuJfvzsXV9sW3YotDZLw7rUu8SAF5QoewE6JeafZI54G1zDqR0ny2hW3kKBLU8ZBPUAENTHoKtXWNEaumwNSebT9b8w0TFOBj7kliLt%2F6u0XNT2Jqip%2FBo1XWCH7IrQxOu%2FAZL9D1OnlUNVh5fRJpXNhmBabJtKeUPCHSC6%2FF9Fg8PwyxWqCEfpocUEqQXhpr%2FnJh1oH83Kr%2BSQZC9kWT9mbBRhhyWTszQQjhIR9tfX6Q0IHBy84O7vcDM%2BUNUxWysYQuTZr6qbATSHha86AOjebJiNAMfo0yNkKKxsMqDkkm95rjweiSI4qG12mHRl2IDD5%2BRk1CF5JYeafv32nxxbuw766BAiXEDu%2BO0CyDxazZPJ4QizVLyKwRsS4amgQE1hWCcagCPCkweDZU9preBJDdLph4SWZZ8Tu%2BJlF88zOUaszXAyWbS3Ag%2B5hkSoM1PDK6s9Xxv2JqSRvensNFZxcDdfOWJl82Df%2BqnjkpY5Zvr0rJjqZMDIjfPptVzY8sf1Cfke%2BYc6Cqm3o9n7qtNcQhaO8ngOrZ3If7WIPuFo1QxBi3QTixYKChQ8xdSOlIGEJajb2JbtaJ8b0Mvl8BjwyAFNRZhtfAKKRi13wEatuZ4xlgDf%2Fi%2F5HNXph6xrxWHov7fpACbRFQ1p3sVq5htaI%2FWLLOvSCtv5c%2FnLFELIuB3%2B3D7RFWAGQ6z3ILQCZWB5DDmZcX59eC7xb6domDIbAV2aYtc1YC92OwDT8b0JeDU3AgKaz7hA4osoo6Ny4kr9kVQwFobtB6YtinhUo5LPV%2BVEosQuRJmJfNwHwg5A0ypWWuM9VT3vJSwEpN7PglvoCcS7plVbRbd4A%2B7vUymRlw0lamytxfhjJguE%2FXT10SJTxzJ5PtYGFBo%2FvArhFd8LNG%2BFU9Jk92pgdfGLO%2BULBDmcCLL4h0RdVO4WmkCL0e10n76cMhwHNT6q6FaEBiVZrkmnjGTZpYkglQOx37bqZnYV8hxSeTU1zNpgXuqmNBQRbZqfUc4hMMBkz0GatEeIsyfy6F6vtOllT%2B84WvHokeJ0wJkGk%2BMHkKAupHj8%2FleCkm39sPT%2BHEGrFdfW426ijMy%2FVp5DJEZGdZcuC2sTuZNdg3QLdRUqRkwvbjm033l%2FlGIvQq0aZpqYbOdi7JLTYQNdx1wwQxpJfaOgIFypltS5xSh9KXYtYY%2BCEG%2F9FmHM7%2BVHdT2BLT%2B7MaxoSQiQBU5JAftcejwkg2WS%2FTvzk%2BuUzYRv1SHc9enBlXUtvxCi6DwJuskWS9qvj9CHjEEElHYUcCYZsOq88g7rJ2RkWMR0qqFZraX67SaXy%2F6ZGQyJZS3ypgY7dWm3ZjiFtSVeD5GwoF%2Fz9UpN%2B5BPc8r36tayXzOnyXqOsvt%2BoD6p%2FNf6Pb1ijK6m7jCRjlxrAyHHMz%2BXufLdC%2Fgk1TjSZPDM5WzxmRbOxkb%2FHT77F05hYu%2FvI4%2F3Sl9LaH3%2F10Ljj32nHBxOxa9ymjcBJRZQ1ENT86O0dyKB8ySqxH0C6k4bqoarmKDnwkdWxuTH%2FdP%2F%2FVePhHyF10gzU8dZk3lnrozkiDRqiIjJg7S%2BPm9cEywxjSvCSFz68q1bn9MfiijziNJb1NWgkLvig9ZkbaLQGYoblGmt9SWe7N%2FerQ1PFrgkTSv1FdCtDx2fZY%2BD5Yg47T%2B74PF3l8OWktYtRqHckdwv1ASQ%2Fi3WHDKN%2BXlxhM1tROs0mVlrUv5tJDRdcSjpQD5KC7J5NOY9L8GpHfwypSmNPwc2oDP4%2BTHCrqPssLRlpok3JJBVWD1p6ddTsNqUAPVxVlTPC0H2VZYtiVm2%2BMIXA50VT7flVVhIsxDi1lUsBsIgqu87aZ8OuohNDtFCuNT77WJJkqiZo6vFWq92UDkSOXdZWae8hFaPM8difyp3k0XiLWJi8bApKCM%2BCM4Kt8MHjG5FatH%2FFSGi5NAe5Dn12W7M7N2JHX9JeHRWnwqCIIm5cq0zHtQoZshP7XHqnDqHvj0YdbmSwxjD8h%2BN6FD%2F9EUGyENsayy1qC%2BGvAr%2FtcW6GGIutbnv%2FwB4QMwvr%2FOvA2I2mtvywJOwXj%2BNrH52tIdr4aOxVqtVIN6DbF2kZg1BSxBuMHpv%2BWTNKwUKeIcT6kjX%2B9gQ%2BZ6ocU61XHm06A2SFbbm4oCwzwxj5qejgAhGGlgKsIKwlOD%2Fdm0zgH6ekHV47bNwcypOWoCqNcrDNo5cQhYfwx2fOcM2aK9AXyzPTFuh69gSmCizWUFAxwSPCHdPxkaRg5yvXgI0B6zV8zy3KXc3FTJinWs7OYHRztJs6CgVNpX%2BXPguEKkRjg9kcqxv0Irxldc8SzMpbup1w%2F8q%2B%2FGHniH%2BSkm4CPH9hkraPUV1eZEPtrH59xk1bDVwIWVAB9WssiIfJzuC%2BtmBcFT8bINVgqWzCvGZ5dndSjkEN84Y99RD8SIND%2B2nRci8jH3vnNZlEBNxKIepfmPdfTTvG2vbIAq4UFDBjRl5I1g3NsYUbqCvj3u2FUpad4rXoqbiOUPGiOnVzswcKc4%2FKCnYu5IRaAd6jvPUfEHYbePiVqjwAjlXCuGSGyYVqnLH1e%2BuvPqT1O4KBt%2BNdU0qHeMrr4kspwD9EPJXEXlkfBuVHDEzm33KQvcwsIG8vNLU5vlpN%2FNGdzgPReJNOFeZI2t9xztvHqNn%2FPtzZeSdoqSm82wIpoaYsBZgvXLw7Gn5MGClIFcnxU%2BfsXwEPMp12fiJoYRbkln3g%2FW2gdcKIJosN41lQVXSO2JAfWteJRig1%2BYhNplFbRIjkc5YEQzDbCTYUa4BpjX7Klpl0SKtlNCaSLLq8p7isWMsBxlUFogdKIAjLoSx0%2Falcw%2FSioL0BjVbLFLhyq%2BJZM8axjgU3rzJqrbsat6pI5hVo9NLtfWxBzbKrVIIzpscy3aZE4nj34nJikbpGzwYxj2bEYwzk084V1PAsH2fTPLZZP7kQGNT%2BToVyDTZq%2BetUcLmqCiYh3Q5fTsCDwcLev7diZkC4YWtR0nfPpIG7Osg75XLZOzNJi8yZ%2FeHQ2Kl1LexXdjH6O2YcjnDWzlc4WPH6c7vDgwAZQEz6GXNRR7NMik1x26AyxjYuwwHUosQQLItnDwRSSfffFosroid70iyvcZIQNKx9d2IuYfq%2FWsctMCkr2JrdLe0nrfoX3Jo3io2Abof9JMjTZE3jzjn9384TkRp6HDslfUVHpOy9BUilWT61QKslfLntFdJU7b4Bzd36GSzuMex6Vbu9ZzBLcb6xm57oVWrjTwt1AuHhb%2Fvk5UVRHgyHyrxrcUj7cM8C1dlvxuNO4WfNxdVrgbRdIUU1%2FZ7phM4ENrW9gZihuCVcg5DqiFTUl%2BoY%2FxENPE2xcSwMD2TKuKlHtphku%2BG0WNiW8heq1dpbaiABDjF4cx2P92OjksumdX7cC4rINtGyOeHHoSXHFFP2a9u9iZ%2FFXqDxhSfmO1yIuZf0gnbIY3GPy23r6SxoJ1mSdFE2uQ2dlJHJoOgCagOpdn0IfRmtGHZ1s%2B7QUiLK%2BjZCpJs9CI1X0Lmz7l0o1KZ5LhOhWNR5AyTPXG6g88bC7fdXdqHiPeGb1F8%2BGkeZLTKo%2F87COqC6Ves2ke2OHlCFUeMr2T9bvNFPRp0idO%2FN4%2BFkL51E2%2F1z9BEhdI2Ko0iSWxLwmyWI1k9DFkYy1GYRXnhjUXy1dt8nwlZpVUZXQMwSfK6AAaRfqSAWMXtEq0YUqYNCZ2D7BnAX0mDeMpEyws1AQ4RTRpeZbXAy7X4m3wNhb77YZUFxBSEOr2IK5t%2BXbEJhXDHo5iXmXVnf2gsSfmLjfYIVvB%2BNU5Ud2wdElXd%2Fy3ErXaxZO0FsYQy82IgG%2F3qe1corR8VhUL%2FwvddlxvOLKI%2BwQKyinjfLPVcEDtjzlxtonVGLaU3Mkz0k9cDuNjCQYt9dbxBGy%2F9sUHnz6SlcvqxNcys7bJeO60KANJ4OM2HYHJkKNmgJ2nXJeZRdnc0ZkTesx4mFcqtPapuRmMzIa%2FWWbpmzLh8iYEzHBRCI63Zgai81g4ROXKLNPW1Tp4kzyaswJ09bJFtdpSj40UzTw5Ss2OccPFWdQDskj1uiLhPoqcG%2FLumceQCME4lwh24D6VPI%2FcvblELD0KGKM1%2F5CYBTEkGDbQDnC1NCAAq4hvv%2BXqQpMmauT%2FYrrLpGFLBKcK3t7wF24V0pVVhkEQhT0lyZvcoVCcxU%2FWB65p8a2CY2%2BMmQpNuVYC2wTai11m4jEWDecUKI7ZX9k1%2FToGLUlCDk2EaVS1NLeUiibKOgEGEye58EHTa6Yix4B%2BHHFVQ76CkWWh1sPBza00AL9WJmmuRCdjSsp8bLPkDV0aGzmtonr3%2BSASEQv%2F5N9oJgzXDdA7IQZGKGGD9xyBhygOSMY%2BvMCXNxIR1jXuKWHtdDntMt%2Bn6fpDbjo6ZQ1O3apXjo749jpqBsWw4k6CFDinEP87SSIMbpuy8F9EyvYzr4N71%2B5MNrcW5W15Gn0hzOQyv2u6nHXV4SKwHEK3xHqCEFknwca5vxV8AxRWTfYbKRP%2FKLwLKvaJImHxu2Bmxh8QECEuBvnEYoGOM3ATjQR1S2v6eJciGJJimx%2FoouUPaorUXw0a%2BKOa0aJUH7xcfoNBuBfd2cXGIp4XQLsB9EiM%2BluEBnD9AUgcI4jGAu8FNBQammFOkyrpnMS9JFfGbTBVUrftY0bBf5uGYzSbVZnwtfwe8IVgI%2FnfwFJ5MFjMz8ag3dkcPfAlInVGiXVt%2FxSlYmx8Bi2tCRCf%2BuP%2FN45mumAUajPwUODKrUbdNfq5cbKZ973ziOLWNShtEMgyanD604OchfYBoS9nhbHuHAJZSTdLhlgQi6PEuCjEFPhFVKOpM7CUCnV8TBrrTbPHEF3Q0LSb4%2BecLANPdiYOmOStMPxG90fuJscm4YNaX%2B9CXtUB44VhgiCrex9xMRBMAnVmkRP%2BEn1ovrvPBlLFPu9mPLkQ%2BAQ2Ra43RmWfqigY8zXSmRUEDFKxhDF3z4H8tBT2bz9qmu6nfgJeX9E3b6w561RxTQJS%2F%2FUt2F5K9Zzsfq%2Fk79jWhFzxEhGXwziTqr%2F4Q2r9zs1a9h0NFkJoy3OdblgASY76fas7A4FLRBvUltf4F5vOqJhAJrsC%2Fxt64ZVpCNDDfCpEBet3NI6LuxDgQp9Zx2KQkfrM9zohr0dFYMeTH8M312Nrg47R%2FA8HoJROt1nNAtUnQTCBQHZVxRZDilLaqRAl4WoxyW3GzoNuzt01q9MaILUIlELE1Iw4fCjfpqiqOlg7IUSNiz%2F68D5SvkePc2fv8aDo5tFM%3D
+
+
+//    ProgramSettings asettings;
+//    ProgramSettings *pasettings = &asettings;
+//    QObject::connect(papp, &PowerMonitor::SendIniSettings, pcport, &CommPort::RecvPortIniSettings);
+//    QObject::connect(papp, &PowerMonitor::SendIniSettings, pdbase, &PowerDB::RecvDBIniSettings);
+//    QObject::connect(papp, &PowerMonitor::SendIniSettings, pemeter, &PowerMeter::RecvMeterIniSettings);
+
+//    QObject::connect(pcport, SIGNAL(SendPortSection(QString)), pasettings, SLOT(RecvPortSection(QString)));
+//    QObject::connect(pdbase, SIGNAL(SendDBSection(QString)), pasettings, SLOT(RecvDBSection(QString)));
+//    QObject::connect(pemeter, SIGNAL(SendMeterSection(QString)), pasettings, SLOT(RecvMeterSection(QString)));
+//    QObject::connect(pasettings, SIGNAL(SendPortSettings(QPair<QString, QString>)), pcport, SLOT(RecvPortSettings(QPair<QString, QString>)));
+//    QObject::connect(pasettings, SIGNAL(SendDBSettings(QPair<QString, QString>)), pdbase, SLOT(RecvDBSettings(QPair<QString, QString>)));
+//    QObject::connect(pasettings, SIGNAL(SendMeterSettings(QPair<QString, QString>)), pemeter, SLOT(RecvMeterSettings(QPair<QString, QString>)));
+//    QObject::connect(pasettings, SIGNAL(SendEndPortSettings()), pcport, SLOT(RecvEndPortSettings()));
+//    QObject::connect(pasettings, SIGNAL(SendEndDBSettings()), pdbase, SLOT(RecvEndDBSettings()));
+//    QObject::connect(pasettings, SIGNAL(SendEndMeterSettings()), pemeter, SLOT(RecvEndMeterSettings()));
+//    QObject::connect(pcport, SIGNAL(SendPortSettings(QPair<QString, QString>)), pasettings, SLOT(RecvPortSettings(QPair<QString, QString>)));
+//    QObject::connect(pdbase, SIGNAL(SendDBSettings(QPair<QString, QString>)), pasettings, SLOT(RecvDBSettings(QPair<QString, QString>)));
+//    QObject::connect(pemeter, SIGNAL(SendMeterSettings(QPair<QString, QString>)), pasettings, SLOT(RecvMeterSettings(QPair<QString, QString>)));
+
+//    emit papp->SendIniSettings();
+

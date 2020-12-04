@@ -15,6 +15,15 @@ public:
     PowerMonitor(QWidget *parent = nullptr);
     ~PowerMonitor();
 
+private slots:
+    void on_actionMonitorQuit_triggered();
+
+signals:
+    void showCommPort();
+    void showPowerDB();
+    void showPowerMeter();
+    void SendIniSettings();
+
 private:
     Ui::PowerMonitor *ui;
 };
