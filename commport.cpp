@@ -47,7 +47,8 @@ const QString CommPort::m_PortGroupName {"COMMPORT"};
 
 CommPort::CommPort(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CommPort)
+    ui(new Ui::CommPort),
+    m_SerialPort(new QSerialPort(this))
 {
     //зарядка указателей на гуй элементы
     ui->setupUi(this);
@@ -95,36 +96,34 @@ CommPort::CommPort(QWidget *parent) :
     }
 
     intIndex = 0;
-    QSerialPort * serport;
     foreach(const QSerialPortInfo portitem, QSerialPortInfo::availablePorts())
     {
-        serport = new QSerialPort(this);
-        // создать очередь сообщений обмена с ком портом
-        serport->setPort(portitem);
-        m_serialports.insert(intIndex, qMakePair(portitem, serport));
+        m_SerialPorts.insert(intIndex, portitem);
         ui->comboPortName->addItem(portitem.portName(), intIndex); // зарядка в комбобокс наименования параметра как Qt::DisplayRole и его числового значения как Qt::UserRole
         ++intIndex;
     }
     if(intIndex > 0) ui->comboPortName->setCurrentIndex(0);
     else ui->comboPortName->setCurrentIndex(-1);
+    // создать очередь сообщений обмена с ком портом
     //    qDebug() << "CommPort(QWidget *parent)";
 }
 
 CommPort::~CommPort()
 {
-    QMap<int, QPair<QSerialPortInfo, QSerialPort *>>::iterator itPort;
-    for(itPort = m_serialports.begin(); itPort != m_serialports.end(); ++itPort)
-    {
-        if(itPort.value().second->isOpen()) itPort.value().second->close(); // закрытие портов если они открыты
-        delete itPort.value().second; // уничтожение объектов QSerialPort
-    }
-        // очистить очереди
+    if(m_SerialPort->isOpen()) m_SerialPort->close();
+    // очистить очереди
+    delete m_SerialPort;
     delete ui;
 }
 
 void CommPort::on_actionPortReConnection_triggered()
 {
     // нажатие кнопки Port ReConnect
+}
+
+void CommPort::CloseCommPort()
+{
+
 }
 
 void CommPort::OpenCommPort()

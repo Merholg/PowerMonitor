@@ -15,20 +15,6 @@ struct PORTSET
     QMap<QString, int>  Choose; // Массив пар возможных строковых значений ключа и их числовая интерпретация
 };
 
-//struct PORTMESSAGE
-//{
-//    QByteArray  bSendMessage;
-//    QByteArray  bRecvMessage;
-//    int         intMaxLenRecvMessage;
-//};
-
-//struct SERIALPORTS
-//{
-//    QSerialPortInfo     SerialPortInfo;
-//    QSerialPort         pSerialPort;
-//    QQueue<PORTMESSAGE> SerialPortQueue;
-//};
-
 namespace Ui {
 class CommPort;
 }
@@ -46,6 +32,7 @@ private slots:
     void RecvPortSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
     void OpenCommPort();
+    void CloseCommPort();
 
 public slots:
     void RecvPortIniSettings(); // получить сигнал на начало работы и SendPortSection(QString arg1)
@@ -62,7 +49,8 @@ private:
     static const QString m_PortGroupName; //наименование секции с записями значений относящихся к ком порту
     QMap<QString, QComboBox *> m_ComboBoxes; //указатели на комбобоксы с параметрами компорта для автоматической обработки
 
-    QMap<int, QPair<QSerialPortInfo, QSerialPort *>> m_serialports;
+    QSerialPort * m_SerialPort;
+    QMap<int, QSerialPortInfo> m_SerialPorts;
 
 };
 
