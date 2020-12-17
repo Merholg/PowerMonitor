@@ -335,7 +335,7 @@
       </size>
      </property>
      <property name="text">
-      <string>ReConnect</string>
+      <string>(Re)Connect</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
