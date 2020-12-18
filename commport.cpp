@@ -116,76 +116,71 @@ CommPort::~CommPort()
     delete ui;
 }
 
-void CommPort::on_actionPortReConnection_triggered()
+void CommPort::on_actionPortReConnection_triggered() // нажатие кнопки Port ReConnect
 {
-    // нажатие кнопки Port ReConnect
+    ReOpenCommPort();
 }
 
-void CommPort::CloseCommPort()
-{
 
-}
-
-void CommPort::OpenCommPort()
+void CommPort::ReOpenCommPort()
 {
-//    QMap<QString, PORTSET>::const_iterator itDecl;
-//    QMap<QString, int>::const_iterator itChoose;          //существующие варианты значения переменной
-//    int intIndex;
-//    if(m_commportopened)
-//    {
-//        // очистить очереди
-//        m_serial->close();
-//        m_commportopened = false;
-//    }
-//    if(ui->comboPortName->count() > 0)
-//    {
-//        if(ui->comboPortName->currentIndex() < 0) intIndex = 0;
-//        else intIndex = ui->comboPortName->currentIndex();
+    QMap<QString, QComboBox *>::iterator  itCombo;        //итератор комбобоксов
+    int intIndex;
+    if(m_SerialPort->isOpen()) m_SerialPort->close();
+    if(ui->comboPortName->currentIndex() >= 0)
+    {
+        intIndex = ui->comboPortName->currentData(Qt::UserRole).toInt();
+        m_SerialPort->setPort(m_SerialPorts[intIndex]);
 //        m_serial->setPortName(ui->comboPortName->itemText(intIndex));
 
-//        itDecl = m_DeclPortSettings.constFind("BaudRate");
-//        itChoose = itDecl.value().Choose.constFind(ui->comboPortBaudRate->currentText());
-//        if(itChoose == itDecl.value().Choose.end()) itChoose = itDecl.value().Choose.constFind(itDecl.value().Value);
-//        m_serial->setBaudRate(itChoose.value());
+        itCombo = m_ComboBoxes.find("BaudRate"); // поиск комбобокса с названием
+        if(itCombo != m_ComboBoxes.end()) // найден
+        {
+            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
+            m_SerialPort->setBaudRate(intIndex);
+        }
+        itCombo = m_ComboBoxes.find("DataBits"); // поиск комбобокса с названием
+        if(itCombo != m_ComboBoxes.end()) // найден
+        {
+            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
+            m_SerialPort->setDataBits(static_cast<QSerialPort::DataBits>(intIndex));
+        }
+        itCombo = m_ComboBoxes.find("Parity"); // поиск комбобокса с названием
+        if(itCombo != m_ComboBoxes.end()) // найден
+        {
+            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
+            m_SerialPort->setParity(static_cast<QSerialPort::Parity>(intIndex));
+        }
+        itCombo = m_ComboBoxes.find("StopBits"); // поиск комбобокса с названием
+        if(itCombo != m_ComboBoxes.end()) // найден
+        {
+            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
+            m_SerialPort->setStopBits(static_cast<QSerialPort::StopBits>(intIndex));
+        }
+        itCombo = m_ComboBoxes.find("FlowControl"); // поиск комбобокса с названием
+        if(itCombo != m_ComboBoxes.end()) // найден
+        {
+            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
+            m_SerialPort->setFlowControl(static_cast<QSerialPort::FlowControl>(intIndex));
+        }
 
-//        itDecl = m_DeclPortSettings.constFind("DataBits");
-//        itChoose = itDecl.value().Choose.constFind(ui->comboPortDataBits->currentText());
-//        if(itChoose == itDecl.value().Choose.end()) itChoose = itDecl.value().Choose.constFind(itDecl.value().Value);
-//        m_serial->setDataBits(static_cast<QSerialPort::DataBits>(itChoose.value()));
-
-//        itDecl = m_DeclPortSettings.constFind("Parity");
-//        itChoose = itDecl.value().Choose.constFind(ui->comboPortParity->currentText());
-//        if(itChoose != itDecl.value().Choose.end()) itChoose = itDecl.value().Choose.constFind(itDecl.value().Value);
-//        m_serial->setParity(static_cast<QSerialPort::Parity>(itChoose.value()));
-
-//        itDecl = m_DeclPortSettings.constFind("StopBits");
-//        itChoose = itDecl.value().Choose.constFind(ui->comboPortStopBits->currentText());
-//        if(itChoose != itDecl.value().Choose.end()) itChoose = itDecl.value().Choose.constFind(itDecl.value().Value);
-//        m_serial->setStopBits(static_cast<QSerialPort::StopBits>(itChoose.value()));
-
-//        itDecl = m_DeclPortSettings.constFind("FlowControl");
-//        itChoose = itDecl.value().Choose.constFind(ui->comboPortFlowControl->currentText());
-//        if(itChoose != itDecl.value().Choose.end()) itChoose = itDecl.value().Choose.constFind(itDecl.value().Value);
-//        m_serial->setFlowControl(static_cast<QSerialPort::FlowControl>(itChoose.value()));
-
-//        if (m_serial->open(QIODevice::ReadWrite))
-//        {
-//            m_commportopened = true;
-////            ui->statusBar->showMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
+        if(m_SerialPort->open(QIODevice::ReadWrite))
+        {
+//            ui->statusBar->showMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
 ////                                   .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
 ////                                   .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
 ////        showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
 ////                          .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
 ////                          .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
-//        }
-//        else
-//        {
-//            QMessageBox::critical(this, tr("Error"), m_serial->errorString());
+        }
+        else
+        {
+            QMessageBox::critical(this, tr("Error"), m_SerialPort->errorString());
 
 ////        showStatusMessage(tr("Open error"));
 ////            ui->statusBar->showMessage(tr("Open error"));
-//        }
-//    }
+        }
+    }
 
 }
 

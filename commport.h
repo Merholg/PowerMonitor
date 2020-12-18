@@ -31,8 +31,7 @@ private slots:
     void on_actionPortReConnection_triggered(); //нажатие кнопки (Re)Connect
     void RecvPortSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
-    void OpenCommPort();
-    void CloseCommPort();
+    void ReOpenCommPort();
 
 public slots:
     void RecvPortIniSettings(); // получить сигнал на начало работы и SendPortSection(QString arg1)
