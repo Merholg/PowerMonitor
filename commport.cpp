@@ -70,11 +70,13 @@ CommPort::CommPort(QWidget *parent) :
     pactReCon->setStatusTip("Port Connected");
     pactReCon->setWhatsThis("When pressed, the application tries to open/close the selected port based on its current state");
 //    pactReCon->seticon(QPixmap(":/img4.png"));
-    QObject::connect(pactReCon, SIGNAL(triggered()), this, SLOT(on_actionPortReConnection_triggered()));
+    QObject::connect(pactReCon, SIGNAL(triggered()), this, SLOT(on_actionPortReConnection_triggered())); // кнопка ReConnect
     ui->buttonPortReConnect->addAction(pactReCon);
 
     //ui->buttonPortClose->setEnabled(false);
-    QObject::connect(ui->buttonPortClose, SIGNAL(clicked()), this, SLOT(hide())); // кнопка закрытия окна
+    QObject::connect(ui->buttonPortClose, SIGNAL(clicked()), SLOT(hide())); // кнопка закрытия окна
+
+    QObject::connect(m_SerialPort, SIGNAL(readyRead()), SLOT(RecvResponseData())); // данные порта получены
 
     QMap<QString, PORTSET>::const_iterator itDecl;        //итератор установок порта
     QMap<QString, int>::const_iterator itChoose;          //существующие варианты значения выбранной переменной (map из PORTSETa)
@@ -85,7 +87,7 @@ CommPort::CommPort(QWidget *parent) :
         itDecl = m_DeclPortSettings.constFind(itCombo.key()); // найти в описании значений PORTSET с названием как текущее в списке комбобоксов и установить туда указатель
         if(itDecl != m_DeclPortSettings.end()) // если нашли
         {
-            for (itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose) // цикл по выбираемым опциям указанной переменной и заполнение соотв. комбобокса
+            for(itChoose = itDecl.value().Choose.constBegin(); itChoose != itDecl.value().Choose.constEnd(); ++itChoose) // цикл по выбираемым опциям указанной переменной и заполнение соотв. комбобокса
             {
                 itCombo.value()->addItem(itChoose.key(), itChoose.value()); // зарядка в комбобокс наименования параметра как Qt::DisplayRole и его числового значения как Qt::UserRole
             }
@@ -104,25 +106,45 @@ CommPort::CommPort(QWidget *parent) :
     }
     if(intIndex > 0) ui->comboPortName->setCurrentIndex(0);
     else ui->comboPortName->setCurrentIndex(-1);
-    // создать очередь сообщений обмена с ком портом
-    //    qDebug() << "CommPort(QWidget *parent)";
 }
 
 CommPort::~CommPort()
 {
     if(m_SerialPort->isOpen()) m_SerialPort->close();
-    // очистить очереди
     delete m_SerialPort;
     delete ui;
 }
 
-void CommPort::on_actionPortReConnection_triggered() // нажатие кнопки Port ReConnect
+void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
 {
-    ReOpenCommPort();
+    m_ExpectedBytes.clear();
+    if(m_SerialPort->isOpen())
+    {
+        m_ExpectedBytes = arg2;
+        m_SerialPort->clear(QSerialPort::AllDirections);
+        if(m_SerialPort->write(arg1) < 0) QMessageBox::critical(this, tr("Error"), m_SerialPort->errorString());
+    }
+
 }
 
+void CommPort::RecvResponseData()
+{
+    QByteArray ReadBytes;
+    int intIndex = m_ExpectedBytes.indexOf(m_SerialPort->bytesAvailable());
+    if(intIndex < 0) // если не найден вариант с подход. длиной полученного сообщения пытаемся подогнать под первую мменьшую длину
+    {
+        std::sort (m_ExpectedBytes.begin(), m_ExpectedBytes.end());
+        QList<int>::const_iterator itLen;
+        for(itLen = m_ExpectedBytes.constBegin(); itLen != m_ExpectedBytes.constEnd(); ++itLen)
+            if(m_SerialPort->bytesAvailable() >= *itLen) ReadBytes = m_SerialPort->read(*itLen);
+    }
+    else ReadBytes = m_SerialPort->read(m_ExpectedBytes.at(intIndex));
+    m_SerialPort->clear(QSerialPort::AllDirections);
+    m_ExpectedBytes.clear();
+    emit SendResponseData(ReadBytes);
+}
 
-void CommPort::ReOpenCommPort()
+void CommPort::on_actionPortReConnection_triggered() // нажатие кнопки Port ReConnect
 {
     QMap<QString, QComboBox *>::iterator  itCombo;        //итератор комбобоксов
     int intIndex;

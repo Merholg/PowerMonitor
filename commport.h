@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QMessageBox>
 #include <QDebug>
+#include <algorithm>
 
 struct PORTSET
 {
@@ -31,7 +32,8 @@ private slots:
     void on_actionPortReConnection_triggered(); //нажатие кнопки (Re)Connect
     void RecvPortSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
-    void ReOpenCommPort();
+    void RecvResponseData(); // чтение данных из порта и отправка их сигналом SendReadedData
+    void RecvRequestData(QByteArray arg1, QList<int> arg2); // запрос на нередачу данных и последующий прием ожидаемого количества байт
 
 public slots:
     void RecvPortIniSettings(); // получить сигнал на начало работы и SendPortSection(QString arg1)
@@ -39,8 +41,7 @@ public slots:
 signals:
     void SendPortSection(QString arg1); //передать название секции с параметрами компорта в экз. ini файла
     void SendPortSettings(QPair<QString, QString> arg1); // записать установленное значение
-    void SendPortOpen(); // порт открыт
-    void SendPortClose();// порт закрыт
+    void SendResponseData(QByteArray arg1); // отправить полученные данные
 
 private:
     Ui::CommPort *ui;
@@ -48,8 +49,10 @@ private:
     static const QString m_PortGroupName; //наименование секции с записями значений относящихся к ком порту
     QMap<QString, QComboBox *> m_ComboBoxes; //указатели на комбобоксы с параметрами компорта для автоматической обработки
 
-    QSerialPort * m_SerialPort;
-    QMap<int, QSerialPortInfo> m_SerialPorts;
+    QSerialPort * m_SerialPort; // экземпляр открытого порта
+    QMap<int, QSerialPortInfo> m_SerialPorts; // список существующих портов
+    QList<int> m_ExpectedBytes; // варианты ожидаемого количества байт при  приеме
+//    QByteArray m_ReadBytes; // массив с прочитанными данными
 
 };
 
