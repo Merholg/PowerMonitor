@@ -6,9 +6,10 @@
 #include <QSerialPortInfo>
 #include <QMap>
 #include <QComboBox>
+#include <QAction>
 #include <QMessageBox>
 #include <QDebug>
-#include <algorithm>
+//#include <algorithm>
 
 struct PORTSET
 {

@@ -66,7 +66,7 @@ CommPort::CommPort(QWidget *parent) :
     QAction* pactReCon = new QAction("Port (Re)Connection action", 0);
     pactReCon->setText("&ReConnect");
     pactReCon->setShortcut(QKeySequence("CTRL+O"));
-    pactReCon->setToolTip("Connect/Disconnect serial port");
+    pactReCon->setToolTip("ReConnect serial port");
     pactReCon->setStatusTip("Port Connected");
     pactReCon->setWhatsThis("When pressed, the application tries to open/close the selected port based on its current state");
 //    pactReCon->seticon(QPixmap(":/img4.png"));
@@ -133,7 +133,7 @@ void CommPort::RecvResponseData()
     int intIndex = m_ExpectedBytes.indexOf(m_SerialPort->bytesAvailable());
     if(intIndex < 0) // если не найден вариант с подход. длиной полученного сообщения пытаемся подогнать под первую мменьшую длину
     {
-        std::sort (m_ExpectedBytes.begin(), m_ExpectedBytes.end());
+        std::sort(m_ExpectedBytes.begin(), m_ExpectedBytes.end());
         QList<int>::const_iterator itLen;
         for(itLen = m_ExpectedBytes.constBegin(); itLen != m_ExpectedBytes.constEnd(); ++itLen)
             if(m_SerialPort->bytesAvailable() >= *itLen) ReadBytes = m_SerialPort->read(*itLen);
@@ -209,10 +209,10 @@ void CommPort::on_actionPortReConnection_triggered() // нажатие кноп�
 void CommPort::RecvEndPortSettings()
 {
     // отправить в programsettings m_ComboBoxes
-    QMap<QString, QComboBox *>::const_iterator  itCombo;
-    for(itCombo = m_ComboBoxes.constBegin(); itCombo != m_ComboBoxes.constEnd(); ++itCombo) emit SendPortSettings(qMakePair(itCombo.key(), itCombo.value()->currentText())); // записать все в ini файл
+    QMap<QString, QComboBox *>::iterator  itCombo;        //итератор комбобоксов
+    for(itCombo = m_ComboBoxes.begin(); itCombo != m_ComboBoxes.end(); ++itCombo) emit SendPortSettings(qMakePair(itCombo.key(), itCombo.value()->currentText())); // записать все в ini файл
 
-    for(itCombo = m_ComboBoxes.constBegin(); itCombo != m_ComboBoxes.constEnd(); ++itCombo) itCombo.value()->setEnabled(true); // все разрешить
+    for(itCombo = m_ComboBoxes.begin(); itCombo != m_ComboBoxes.end(); ++itCombo) itCombo.value()->setEnabled(true); // все разрешить
     ui->buttonPortReConnect->setEnabled(true);
     //ui->buttonPortClose->setEnabled(true);
 

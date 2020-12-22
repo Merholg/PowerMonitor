@@ -3,7 +3,8 @@
 
 #include <QDialog>
 #include <QMap>
-#include <QComboBox>
+#include <QLineEdit>
+#include <QAction>
 
 namespace Ui {
 class PowerDB;
@@ -18,6 +19,7 @@ public:
     ~PowerDB();
 
 private slots:
+    void on_actionDBReConnection_triggered();
     void RecvDBSettings(QPair<QString, QString> arg1);
     void RecvEndDBSettings();
 
@@ -27,8 +29,6 @@ public slots:
 signals:
     void SendDBSection(QString arg1);
     void SendDBSettings(QPair<QString, QString> arg1);
-    void SendDBOpen();
-    void SendDBClose();
 
 private:
     Ui::PowerDB *ui;
