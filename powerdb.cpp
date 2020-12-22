@@ -59,6 +59,8 @@ PowerDB::~PowerDB()
 
 void PowerDB::on_actionDBReConnection_triggered() // нажатие кнопки Port ReConnect
 {
+//попытаься открыть БД, а если нет такой - создать QDialog
+
 //    QMap<QString, QComboBox *>::iterator  itCombo;        //итератор комбобоксов
 //    int intIndex;
 //    if(m_SerialPort->isOpen()) m_SerialPort->close();
