@@ -42,7 +42,7 @@ public slots:
 signals:
     void SendPortSection(QString arg1); //передать название секции с параметрами компорта в экз. ini файла
     void SendPortSettings(QPair<QString, QString> arg1); // записать установленное значение
-    void SendResponseData(QByteArray arg1); // отправить полученные данные
+    void SendResponseData(QByteArray arg1, int arg2, QString arg3); // отправить полученные данные
 
 private:
     Ui::CommPort *ui;

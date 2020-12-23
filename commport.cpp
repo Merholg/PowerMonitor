@@ -117,31 +117,65 @@ CommPort::~CommPort()
 
 void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
 {
+    // получив сигнал на запрос значения переменной сохраняем в m_ExpectedBytes массив ожидаемых длин возвращаемого значения и отсылаем байтмассив запроса
+    // если порт не открыт либо ошибка записи - немедленно излучается сигнал SendResponseData содержащий пустой байтмассив и сообщения об ошибке
+    // иначе SendResponseData излучается когда будут получены данные ответа на запрос
+    QByteArray ReadBytes;
     m_ExpectedBytes.clear();
     if(m_SerialPort->isOpen())
     {
         m_ExpectedBytes = arg2;
         m_SerialPort->clear(QSerialPort::AllDirections);
-        if(m_SerialPort->write(arg1) < 0) QMessageBox::critical(this, tr("Error"), m_SerialPort->errorString());
+        if(m_SerialPort->write(arg1) < 0)
+        {
+//            QMessageBox::critical(this, tr("Error"), m_SerialPort->errorString());
+            m_ExpectedBytes.clear();
+            emit SendResponseData(ReadBytes, -2, m_SerialPort->errorString());
+        }
     }
+    else emit SendResponseData(ReadBytes, -1, "Port not open");
 
 }
 
 void CommPort::RecvResponseData()
 {
     QByteArray ReadBytes;
+    int ErrNumber = 0;
+    QString ErrString = "";
     int intIndex = m_ExpectedBytes.indexOf(m_SerialPort->bytesAvailable());
     if(intIndex < 0) // если не найден вариант с подход. длиной полученного сообщения пытаемся подогнать под первую мменьшую длину
     {
         std::sort(m_ExpectedBytes.begin(), m_ExpectedBytes.end());
         QList<int>::const_iterator itLen;
         for(itLen = m_ExpectedBytes.constBegin(); itLen != m_ExpectedBytes.constEnd(); ++itLen)
-            if(m_SerialPort->bytesAvailable() >= *itLen) ReadBytes = m_SerialPort->read(*itLen);
+        {
+            if(m_SerialPort->bytesAvailable() >= *itLen)
+            {
+                ReadBytes = m_SerialPort->read(*itLen);
+                if(ReadBytes.isEmpty())
+                {
+                    ErrNumber = -3;
+                    ErrString = "Error read response data (+unexpected lenght)";
+                }
+                break;
+            }
+        }
     }
-    else ReadBytes = m_SerialPort->read(m_ExpectedBytes.at(intIndex));
+    else
+    {
+        if(0 != m_ExpectedBytes.at(intIndex))
+        {
+            ReadBytes = m_SerialPort->read(m_ExpectedBytes.at(intIndex));
+            if(ReadBytes.isEmpty())
+            {
+                ErrNumber = -3;
+                ErrString = "Error read response data";
+            }
+        }
+    }
     m_SerialPort->clear(QSerialPort::AllDirections);
     m_ExpectedBytes.clear();
-    emit SendResponseData(ReadBytes);
+    emit SendResponseData(ReadBytes, ErrNumber, ErrString);
 }
 
 void CommPort::on_actionPortReConnection_triggered() // нажатие кнопки Port ReConnect
