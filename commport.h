@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QAction>
 #include <QMessageBox>
+#include <QErrorMessage>
 #include <QDebug>
 //#include <algorithm>
 
@@ -35,6 +36,8 @@ private slots:
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
     void RecvResponseData(); // чтение данных из порта и отправка их сигналом SendReadedData
     void RecvRequestData(QByteArray arg1, QList<int> arg2); // запрос на нередачу данных и последующий прием ожидаемого количества байт
+    void RecvOccurredError(); // cообщение об ошибке во время работы с экземпляром порта
+    void RecvAboutToClose(); // сообщение в статусбар при закрытии порта
 
 public slots:
     void RecvPortIniSettings(); // получить сигнал на начало работы и SendPortSection(QString arg1)
@@ -43,6 +46,7 @@ signals:
     void SendPortSection(QString arg1); //передать название секции с параметрами компорта в экз. ini файла
     void SendPortSettings(QPair<QString, QString> arg1); // записать установленное значение
     void SendResponseData(QByteArray arg1, int arg2, QString arg3); // отправить полученные данные
+    void SendStatusString(QString arg1); // отправка строки в статусбар
 
 private:
     Ui::CommPort *ui;

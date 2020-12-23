@@ -63,7 +63,7 @@ CommPort::CommPort(QWidget *parent) :
 
     ui->buttonPortReConnect->setEnabled(false);
     // подключение к кнопке (Re)Connect действия
-    QAction* pactReCon = new QAction("Port (Re)Connection action", 0);
+    QAction * pactReCon = new QAction("Port (Re)Connection action", 0);
     pactReCon->setText("&ReConnect");
     pactReCon->setShortcut(QKeySequence("CTRL+O"));
     pactReCon->setToolTip("ReConnect serial port");
@@ -77,6 +77,8 @@ CommPort::CommPort(QWidget *parent) :
     QObject::connect(ui->buttonPortClose, SIGNAL(clicked()), SLOT(hide())); // кнопка закрытия окна
 
     QObject::connect(m_SerialPort, SIGNAL(readyRead()), SLOT(RecvResponseData())); // данные порта получены
+    QObject::connect(m_SerialPort, SIGNAL(errorOccurred()), SLOT(RecvOccurredError())); // если в процессе работы возникнет ошибка
+    QObject::connect(m_SerialPort, SIGNAL(aboutToClose()), SLOT(RecvAboutToClose())); // если в процессе работы возникнет ошибка
 
     QMap<QString, PORTSET>::const_iterator itDecl;        //итератор установок порта
     QMap<QString, int>::const_iterator itChoose;          //существующие варианты значения выбранной переменной (map из PORTSETa)
@@ -115,6 +117,20 @@ CommPort::~CommPort()
     delete ui;
 }
 
+void CommPort::RecvAboutToClose()
+{
+    emit SendStatusString(QString("Port %1 close").arg(m_SerialPort->portName()));
+}
+
+void CommPort::RecvOccurredError()
+{
+    //QErrorMessage m_SerialPort->errorString()
+    QErrorMessage * errorMessage = new QErrorMessage(this);
+    errorMessage->showMessage(m_SerialPort->errorString());
+    m_SerialPort->clearError();
+    delete errorMessage;
+}
+
 void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
 {
     // получив сигнал на запрос значения переменной сохраняем в m_ExpectedBytes массив ожидаемых длин возвращаемого значения и отсылаем байтмассив запроса
@@ -130,11 +146,10 @@ void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
         {
 //            QMessageBox::critical(this, tr("Error"), m_SerialPort->errorString());
             m_ExpectedBytes.clear();
-            emit SendResponseData(ReadBytes, -2, m_SerialPort->errorString());
+            emit SendResponseData(ReadBytes, -2, "Port write error"); // m_SerialPort->errorString() мб прибита в RecvOccurredError через  m_SerialPort->clearError();
         }
     }
     else emit SendResponseData(ReadBytes, -1, "Port not open");
-
 }
 
 void CommPort::RecvResponseData()
@@ -183,58 +198,27 @@ void CommPort::on_actionPortReConnection_triggered() // нажатие кноп�
     QMap<QString, QComboBox *>::iterator  itCombo;        //итератор комбобоксов
     int intIndex;
     if(m_SerialPort->isOpen()) m_SerialPort->close();
+
     if(ui->comboPortName->currentIndex() >= 0)
     {
-        intIndex = ui->comboPortName->currentData(Qt::UserRole).toInt();
-        m_SerialPort->setPort(m_SerialPorts[intIndex]);
-//        m_serial->setPortName(ui->comboPortName->itemText(intIndex));
+        m_SerialPort->setPort(m_SerialPorts[ui->comboPortName->currentData(Qt::UserRole).toInt()]);
+//        m_serial->setPortName(ui->comboPortName->itemText(ui->comboPortName->currentData(Qt::DisplayRole).toString()));
 
-        itCombo = m_ComboBoxes.find("BaudRate"); // поиск комбобокса с названием
-        if(itCombo != m_ComboBoxes.end()) // найден
-        {
-            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
-            m_SerialPort->setBaudRate(intIndex);
-        }
-        itCombo = m_ComboBoxes.find("DataBits"); // поиск комбобокса с названием
-        if(itCombo != m_ComboBoxes.end()) // найден
-        {
-            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
-            m_SerialPort->setDataBits(static_cast<QSerialPort::DataBits>(intIndex));
-        }
-        itCombo = m_ComboBoxes.find("Parity"); // поиск комбобокса с названием
-        if(itCombo != m_ComboBoxes.end()) // найден
-        {
-            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
-            m_SerialPort->setParity(static_cast<QSerialPort::Parity>(intIndex));
-        }
-        itCombo = m_ComboBoxes.find("StopBits"); // поиск комбобокса с названием
-        if(itCombo != m_ComboBoxes.end()) // найден
-        {
-            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
-            m_SerialPort->setStopBits(static_cast<QSerialPort::StopBits>(intIndex));
-        }
-        itCombo = m_ComboBoxes.find("FlowControl"); // поиск комбобокса с названием
-        if(itCombo != m_ComboBoxes.end()) // найден
-        {
-            intIndex = itCombo.value()->currentData(Qt::UserRole).toInt();
-            m_SerialPort->setFlowControl(static_cast<QSerialPort::FlowControl>(intIndex));
-        }
+        m_SerialPort->setBaudRate(ui->comboPortBaudRate->currentData(Qt::UserRole).toInt());
+        m_SerialPort->setDataBits(static_cast<QSerialPort::DataBits>(ui->comboPortDataBits->currentData(Qt::UserRole).toInt()));
+        m_SerialPort->setParity(static_cast<QSerialPort::Parity>(ui->comboPortParity->currentData(Qt::UserRole).toInt()));
+        m_SerialPort->setStopBits(static_cast<QSerialPort::StopBits>(ui->comboPortStopBits->currentData(Qt::UserRole).toInt()));
+        m_SerialPort->setFlowControl(static_cast<QSerialPort::FlowControl>(ui->comboPortFlowControl->currentData(Qt::UserRole).toInt()));
 
         if(m_SerialPort->open(QIODevice::ReadWrite))
         {
-//            ui->statusBar->showMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
-////                                   .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
-////                                   .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
-////        showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
-////                          .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
-////                          .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
-        }
-        else
-        {
-            QMessageBox::critical(this, tr("Error"), m_SerialPort->errorString());
-
-////        showStatusMessage(tr("Open error"));
-////            ui->statusBar->showMessage(tr("Open error"));
+            emit SendStatusString(QString("Port %1 connected as %2,%3,%4,%5,%6")
+                                            .arg(ui->comboPortName->currentText())
+                                            .arg(ui->comboPortBaudRate->currentText())
+                                            .arg(ui->comboPortDataBits->currentText())
+                                            .arg(ui->comboPortParity->currentText())
+                                            .arg(ui->comboPortStopBits->currentText())
+                                            .arg(ui->comboPortFlowControl->currentText()));
         }
     }
 
