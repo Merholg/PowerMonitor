@@ -158,23 +158,10 @@ void CommPort::RecvResponseData()
     int ErrNumber = 0;
     QString ErrString = "";
     int intIndex = m_ExpectedBytes.indexOf(m_SerialPort->bytesAvailable());
-    if(intIndex < 0) // если не найден вариант с подход. длиной полученного сообщения пытаемся подогнать под первую мменьшую длину
+    if(intIndex < 0) // если не найден вариант с подход. длиной полученного сообщения
     {
-        std::sort(m_ExpectedBytes.begin(), m_ExpectedBytes.end());
-        QList<int>::const_iterator itLen;
-        for(itLen = m_ExpectedBytes.constBegin(); itLen != m_ExpectedBytes.constEnd(); ++itLen)
-        {
-            if(m_SerialPort->bytesAvailable() >= *itLen)
-            {
-                ReadBytes = m_SerialPort->read(*itLen);
-                if(ReadBytes.isEmpty())
-                {
-                    ErrNumber = -3;
-                    ErrString = "Error read response data (+unexpected lenght)";
-                }
-                break;
-            }
-        }
+        ErrNumber = -4;
+        ErrString = "Error read response data - unexpected lenght)";
     }
     else
     {
@@ -196,7 +183,6 @@ void CommPort::RecvResponseData()
 void CommPort::on_actionPortReConnection_triggered() // нажатие кнопки Port ReConnect
 {
     QMap<QString, QComboBox *>::iterator  itCombo;        //итератор комбобоксов
-    int intIndex;
     if(m_SerialPort->isOpen()) m_SerialPort->close();
 
     if(ui->comboPortName->currentIndex() >= 0)
