@@ -1,36 +1,30 @@
 #include "powermeter.h"
 #include "ui_powermeter.h"
 
-#define REPEATLIMIT 10
-
-#define MAXVOLUMETIME 5
-#define MAXENERGYTIME 1440
-#define MAXSTATETIME 1440
-#define MAXCONSISTTIME 10080
 // xxxxTime = 0 - не читать группу никогда
 
-const QMap<QString, QString> PowerMeter::m_DeclMeterSettings
+const QMap<QString, METERSET> PowerMeter::m_DeclMeterSettings
 {
-    {"RepeatTimes", "3"},
-    {"AccessLevel", "1"},
-    {"PasswordBYTE1", "1"},
-    {"PasswordBYTE2", "1"},
-    {"PasswordBYTE3", "1"},
-    {"PasswordBYTE4", "1"},
-    {"PasswordBYTE5", "1"},
-    {"PasswordBYTE6", "1"},
-    {"VolumeTimeDay", "0"},
-    {"VolumeTimeHour", "0"},
-    {"VolumeTimeMin", "5"},
-    {"EnergyTimeDay", "0"},
-    {"EnergyTimeHour", "12"},
-    {"EnergyTimeMin", "0"},
-    {"StateTimeDay", "1"},
-    {"StateTimeHour", "0"},
-    {"StateTimeMin", "0"},
-    {"ConsistTimeDay", "7"},
-    {"ConsistTimeHour", "0"},
-    {"ConsistTimeMin", "0"}
+    {"RepeatTimes", {3, 0, 10}},
+    {"AccessLevel", {DEFAULTACCESSLEVEL, MINACCESSLEVEL, MAXACCESSLEVEL}},
+    {"PasswordBYTE1", {1, 0, 255}},
+    {"PasswordBYTE2", {1, 0, 255}},
+    {"PasswordBYTE3", {1, 0, 255}},
+    {"PasswordBYTE4", {1, 0, 255}},
+    {"PasswordBYTE5", {1, 0, 255}},
+    {"PasswordBYTE6", {1, 0, 255}},
+    {"VolumeTimeDay", {0, 0, 365}},
+    {"VolumeTimeHour", {0, 0, 23}},
+    {"VolumeTimeMin", {5, 0, 59}},
+    {"EnergyTimeDay", {0, 0, 365}},
+    {"EnergyTimeHour", {12, 0, 23}},
+    {"EnergyTimeMin", {0, 0, 59}},
+    {"StateTimeDay", {1, 0, 365}},
+    {"StateTimeHour", {0, 0, 23}},
+    {"StateTimeMin", {0, 0, 59}},
+    {"ConsistTimeDay", {7, 0, 365}},
+    {"ConsistTimeHour", {0, 0, 23}},
+    {"ConsistTimeMin", {0, 0, 59}}
 };
 const QString PowerMeter::m_MeterGroupName {"METER"};
 
@@ -60,23 +54,66 @@ PowerMeter::PowerMeter(QWidget *parent) :
     m_ComboBoxes.insert("ConsistTimeHour", ui->spinMeterConsistHour);
     m_ComboBoxes.insert("ConsistTimeMin", ui->spinMeterConsistMin);
 
-    QObject::connect(ui->buttonMeterClose, SIGNAL(clicked()), this, SLOT(hide()));
-
-    ui->spinMeterAddressFROM->setRange(BCASTMETERADDRESS, MAXMETERADDRESS);
-    ui->spinMeterAddressFROM->setValue(MINMETERADDRESS);
-    ui->spinMeterAddressTO->setRange(MINMETERADDRESS, MAXMETERADDRESS);
-    ui->spinMeterAddressTO->setValue(MAXMETERADDRESS);
-    ui->spinMeterRepeat->setRange(0, REPEATLIMIT);
-    ui->spinMeterRepeat->setValue(REPEATLIMIT);
-    ui->spinMeterAccessLevelDef->setRange(MINACCESSLEVEL, MAXACCESSLEVEL);
-    ui->spinMeterAccessLevelDef->setValue(MINACCESSLEVEL);
-    QMap<QString, QString>::const_iterator itDecl;
-    QMap<QString, QSpinBox *>::iterator  itCombo;
-    for (itCombo = m_ComboBoxes.begin(); itCombo != m_ComboBoxes.end(); ++itCombo)
+    QMap<QString, METERSET>::const_iterator itDecl;
+    QMap<QString, QSpinBox *>::iterator  itCombo;        //итератор спинбоксов
+    for(itCombo = m_ComboBoxes.begin(); itCombo != m_ComboBoxes.end(); ++itCombo)
     {
         itDecl = m_DeclMeterSettings.constFind(itCombo.key());
-        if(itDecl != m_DeclMeterSettings.end()) itCombo.value()->setValue(itDecl.value().toInt());
+        if(itDecl != m_DeclMeterSettings.end())
+        {
+            itCombo.value()->setValue(itDecl.value().Value);
+            itCombo.value()->setRange(itDecl.value().MinLimit, itDecl.value().MaxLimit);
+        }
+        itCombo.value()->setEnabled(false); // Запрет доступа
     }
+
+    ui->spinMeterAccessLevel->setRange(ui->spinMeterAccessLevelDef->minimum(), ui->spinMeterAccessLevelDef->maximum());
+    ui->spinMeterPasswordB1->setRange(ui->spinMeterPasswordB1Def->minimum(), ui->spinMeterPasswordB1Def->maximum());
+    ui->spinMeterPasswordB2->setRange(ui->spinMeterPasswordB2Def->minimum(), ui->spinMeterPasswordB2Def->maximum());
+    ui->spinMeterPasswordB3->setRange(ui->spinMeterPasswordB3Def->minimum(), ui->spinMeterPasswordB3Def->maximum());
+    ui->spinMeterPasswordB4->setRange(ui->spinMeterPasswordB4Def->minimum(), ui->spinMeterPasswordB4Def->maximum());
+    ui->spinMeterPasswordB5->setRange(ui->spinMeterPasswordB5Def->minimum(), ui->spinMeterPasswordB5Def->maximum());
+    ui->spinMeterPasswordB6->setRange(ui->spinMeterPasswordB6Def->minimum(), ui->spinMeterPasswordB6Def->maximum());
+    ui->spinMeterAddressFROM->setRange(BCASTMETERADDRESS, MAXMETERADDRESS);
+    ui->spinMeterAddressTO->setRange(BCASTMETERADDRESS, MAXMETERADDRESS);
+    ui->spinMeterAccessLevel->setValue(ui->spinMeterAccessLevelDef->value());
+    ui->spinMeterPasswordB1->setValue(ui->spinMeterPasswordB1Def->value());
+    ui->spinMeterPasswordB2->setValue(ui->spinMeterPasswordB2Def->value());
+    ui->spinMeterPasswordB3->setValue(ui->spinMeterPasswordB3Def->value());
+    ui->spinMeterPasswordB4->setValue(ui->spinMeterPasswordB4Def->value());
+    ui->spinMeterPasswordB5->setValue(ui->spinMeterPasswordB5Def->value());
+    ui->spinMeterPasswordB6->setValue(ui->spinMeterPasswordB6Def->value());
+    ui->spinMeterAddressFROM->setValue(MINMETERADDRESS);
+    ui->spinMeterAddressTO->setValue(MAXMETERADDRESS);
+
+    ui->buttonMeterAdd->setEnabled(false);
+    ui->buttonMeterDelete->setEnabled(false);
+    //ui->buttonMeterClose->setEnabled(false);
+
+    // подключение к кнопке Add действия
+    QAction * pactAdd = new QAction("Search&Add new device with address range action", 0);
+    pactAdd->setText("&Add");
+    pactAdd->setShortcut(QKeySequence("CTRL+A"));
+    pactAdd->setToolTip("Search&Add new device");
+    pactAdd->setStatusTip("Device Added");
+    pactAdd->setWhatsThis("When pressed, the application tries to search and add founded devices");
+//    pactAdd->seticon(QPixmap(":/img4.png"));
+    QObject::connect(pactAdd, SIGNAL(triggered()), this, SLOT(on_actionDeviceAdd_triggered())); // кнопка Add
+    ui->buttonMeterAdd->addAction(pactAdd);
+
+    // подключение к кнопке Delete действия
+    QAction * pactDelete = new QAction("Delete device with address range action", 0);
+    pactDelete->setText("&Delete");
+    pactDelete->setShortcut(QKeySequence("CTRL+D"));
+    pactDelete->setToolTip("Delete devices with address range from table");
+    pactDelete->setStatusTip("Port Connected");
+    pactDelete->setWhatsThis("When pressed, the application tries to delete devices for setted address range");
+//    pactDelete->seticon(QPixmap(":/img4.png"));
+    QObject::connect(pactDelete, SIGNAL(triggered()), this, SLOT(on_actionDeviceDelete_triggered())); // кнопка Delete
+    ui->buttonMeterDelete->addAction(pactDelete);
+
+    QObject::connect(ui->buttonMeterClose, SIGNAL(clicked()), this, SLOT(hide()));
+
 
 
 }
@@ -84,6 +121,16 @@ PowerMeter::PowerMeter(QWidget *parent) :
 PowerMeter::~PowerMeter()
 {
     delete ui;
+}
+
+void PowerMeter::on_actionDeviceDelete_triggered()
+{
+
+}
+
+void PowerMeter::on_actionDeviceAdd_triggered()
+{
+
 }
 
 void PowerMeter::on_spinMeterAddressFROM_valueChanged(int arg1)

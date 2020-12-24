@@ -62,6 +62,8 @@ CommPort::CommPort(QWidget *parent) :
     for(itCombo = m_ComboBoxes.begin(); itCombo != m_ComboBoxes.end(); ++itCombo) itCombo.value()->setEnabled(false); // Запрет доступа
 
     ui->buttonPortReConnect->setEnabled(false);
+    //ui->buttonPortClose->setEnabled(false);
+
     // подключение к кнопке (Re)Connect действия
     QAction * pactReCon = new QAction("Port (Re)Connection action", 0);
     pactReCon->setText("&ReConnect");
@@ -73,7 +75,6 @@ CommPort::CommPort(QWidget *parent) :
     QObject::connect(pactReCon, SIGNAL(triggered()), this, SLOT(on_actionPortReConnection_triggered())); // кнопка ReConnect
     ui->buttonPortReConnect->addAction(pactReCon);
 
-    //ui->buttonPortClose->setEnabled(false);
     QObject::connect(ui->buttonPortClose, SIGNAL(clicked()), SLOT(hide())); // кнопка закрытия окна
 
     QObject::connect(m_SerialPort, SIGNAL(readyRead()), SLOT(RecvResponseData())); // данные порта получены

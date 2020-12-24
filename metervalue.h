@@ -156,7 +156,13 @@
 //#define MAXMERCURYADDRESS 0xFD
 #define MINACCESSLEVEL 1
 #define MAXACCESSLEVEL 2
-#define DEFAULTACCESSLEVEL "1"
+#define DEFAULTACCESSLEVEL 1
+
+struct DEVICEDATA
+{
+    unsigned long long  DevID;    // ID счетчика {00, SN1, SN2, SN3, SN4, ProdDay, ProdMonth, ProdYear}
+    unsigned long long  DevACCESS;  // {NetAddress, AccessLevel,  Pass[0], Pass[1], Pass[2], Pass[3], Pass[4], Pass[5]}
+};
 
 #pragma pack (push, 1)
 struct DEFAULTPASSWORD

@@ -4,7 +4,15 @@
 #include <QDialog>
 #include <QMap>
 #include <QSpinBox>
+#include <QAction>
 #include "metervalue.h"
+
+struct METERSET
+{
+    int Value;  // Значение  по умолчанию
+    int MinLimit; // минимальное значение
+    int MaxLimit; // максимальное значение
+};
 
 namespace Ui {
 class PowerMeter;
@@ -19,6 +27,8 @@ public:
     ~PowerMeter();
 
 private slots:
+    void on_actionDeviceDelete_triggered();
+    void on_actionDeviceAdd_triggered();
     void on_spinMeterAddressFROM_valueChanged(int arg1);
     void RecvMeterSettings(QPair<QString, QString> arg1);
     void RecvEndMeterSettings();
@@ -33,9 +43,10 @@ signals:
 
 private:
     Ui::PowerMeter *ui;
-    static const QMap<QString, QString> m_DeclMeterSettings;
+    static const QMap<QString, METERSET> m_DeclMeterSettings;
     static const QString m_MeterGroupName;
     QMap<QString, QSpinBox *> m_ComboBoxes;
+    QMap<int, DEVICEDATA> DeviceTable;
 };
 
 #endif // POWERMETER_H
