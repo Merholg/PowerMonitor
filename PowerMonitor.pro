@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     commport.cpp \
     main.cpp \
+    metervalue.cpp \
     powerdb.cpp \
     powermeter.cpp \
     powermonitor.cpp \

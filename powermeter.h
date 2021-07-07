@@ -46,7 +46,7 @@ private:
     static const QMap<QString, METERSET> m_DeclMeterSettings;
     static const QString m_MeterGroupName;
     QMap<QString, QSpinBox *> m_ComboBoxes;
-    QMap<int, DEVICEDATA> DeviceTable;
+    QMap<int, DEVICEDATA> m_DeviceTable;
 };
 
 #endif // POWERMETER_H

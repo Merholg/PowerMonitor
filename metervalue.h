@@ -160,25 +160,53 @@
 
 struct DEVICEDATA
 {
-    unsigned long long  DevID;    // ID счетчика {00, SN1, SN2, SN3, SN4, ProdDay, ProdMonth, ProdYear}
-    unsigned long long  DevACCESS;  // {NetAddress, AccessLevel,  Pass[0], Pass[1], Pass[2], Pass[3], Pass[4], Pass[5]}
+    unsigned long long  DevID;    // ID счетчика {SN1, SN2, SN3, SN4, ProdDay, ProdMonth, ProdYear, 0x00}
+    unsigned long long  DevACCESS;  // {Result, AccessLevel,  Pass[0], Pass[1], Pass[2], Pass[3], Pass[4], Pass[5]} Result - код возвращаемый на попытку открыть канал с указанными уровнем и паролем
 };
 
-#pragma pack (push, 1)
-struct DEFAULTPASSWORD
-{
-    unsigned char	DPass1;
-    unsigned char	DPass2;
-    unsigned char	DPass3;
-    unsigned char	DPass4;
-    unsigned char	DPass5;
-    unsigned char	DPass6;
-};
-#pragma pack (pop)
-#define DEFAULTPASSWORDLEN sizeof(DEFAULTPASSWORD)
-#define EXPECT_DEFAULTPASSWORDLEN 6
-#define MINLEVELACCESS 0x01
-#define MAXLEVELACCESS 0x02
+//#pragma pack (push, 1)
+//struct DEFAULTPASSWORD
+//{
+//    unsigned char	DPass1;
+//    unsigned char	DPass2;
+//    unsigned char	DPass3;
+//    unsigned char	DPass4;
+//    unsigned char	DPass5;
+//    unsigned char	DPass6;
+//};
+//#pragma pack (pop)
+//#define DEFAULTPASSWORDLEN sizeof(DEFAULTPASSWORD)
+//#define EXPECT_DEFAULTPASSWORDLEN 6
+//#define MINLEVELACCESS 0x01
+//#define MAXLEVELACCESS 0x02
+
+//2.3.1 Чтение серийного номера счетчика и даты выпуска.
+//В ответ на запрос счетчик возвращает 7 байт в поле данных ответа. Первые 4 байта - се-
+//рийный номер в двоичном позиционном коде, следующие 3 байта - дата выпуска в 2/10-м коде
+//в последовательности: число, месяц, год.
+//#pragma pack (push, 1)
+//struct METERDATA
+//{
+//    unsigned char		ZeroByte; //выравнивание к 8 байтам SN и ProdData
+//    unsigned char		SN1;      //  серийный
+//    unsigned char		SN2;      //          номер
+//    unsigned char		SN3;      //               прибора
+//    unsigned char		SN4;      //                      учета
+//    unsigned char		ProdDay;     //  дата
+//    unsigned char		ProdMonth;   //      производства
+//    unsigned char		ProdYear;    //                  прибора
+//    unsigned char		Address; // Не 0 когда прибор по этому адресу откликается на запрося
+//    unsigned char		Result;  // Код возвращенный последним запросом
+//    unsigned char		Level; //  уровень доступа обеспечивающий выполнение всех необходимых функций
+//    unsigned char		DisableRead; // Когда установлено - чтение прибора запрещено
+//    unsigned char		ZeroPass1; // Выравнивание Pass к 8 байтам
+//    unsigned char		ZeroPass2;
+//    unsigned char		Pass[DEFAULTPASSWORDLEN]; // Пароль доступа к этому прибору
+//    unsigned long long	MercuryID; // ID счетчика 00 SN1 SN2 SN3 SN4 ProdDay ProdMonth ProdYear
+//    unsigned long long	AccessPassword; // Пароль 00 00 Pass[0] Pass[1] Pass[2] Pass[3] Pass[4] Pass[5]
+//};
+//#pragma pack (pop)
+//#define METERDATALEN sizeof(METERDATA)
 
 #pragma pack (push, 1)
 struct LONGLONG8BYTE
@@ -194,45 +222,17 @@ struct LONGLONG8BYTE
 };
 #pragma pack (pop)
 
-//2.3.1 Чтение серийного номера счетчика и даты выпуска.
-//В ответ на запрос счетчик возвращает 7 байт в поле данных ответа. Первые 4 байта - се-
-//рийный номер в двоичном позиционном коде, следующие 3 байта - дата выпуска в 2/10-м коде
-//в последовательности: число, месяц, год.
-#pragma pack (push, 1)
-struct METERDATA
-{
-    unsigned char		ZeroByte; //выравнивание к 8 байтам SN и ProdData
-    unsigned char		SN1;      //  серийный
-    unsigned char		SN2;      //          номер
-    unsigned char		SN3;      //               прибора
-    unsigned char		SN4;      //                      учета
-    unsigned char		ProdDay;     //  дата
-    unsigned char		ProdMonth;   //      производства
-    unsigned char		ProdYear;    //                  прибора
-    unsigned char		Address; // Не 0 когда прибор по этому адресу откликается на запрося
-    unsigned char		Result;  // Код возвращенный последним запросом
-    unsigned char		Level; //  уровень доступа обеспечивающий выполнение всех необходимых функций
-    unsigned char		DisableRead; // Когда установлено - чтение прибора запрещено
-    unsigned char		ZeroPass1; // Выравнивание Pass к 8 байтам
-    unsigned char		ZeroPass2;
-    unsigned char		Pass[DEFAULTPASSWORDLEN]; // Пароль доступа к этому прибору
-    unsigned long long	MercuryID; // ID счетчика 00 SN1 SN2 SN3 SN4 ProdDay ProdMonth ProdYear
-    unsigned long long	AccessPassword; // Пароль 00 00 Pass[0] Pass[1] Pass[2] Pass[3] Pass[4] Pass[5]
-};
-#pragma pack (pop)
-#define METERDATALEN sizeof(METERDATA)
-
-#define REQSEQUENCLEN 8
-#define RESPSTRUCRLEN 256
-#pragma pack (push, 1)
-struct EXCHANGEMETER
-{
-    unsigned char   ReqSequenc[REQSEQUENCLEN];
-    int    ReqSequencIdx;
-    unsigned char   RespStruct[RESPSTRUCRLEN];
-    int    RespStructIdx;
-};
-#pragma pack (pop)
+//#define REQSEQUENCLEN 8
+//#define RESPSTRUCRLEN 256
+//#pragma pack (push, 1)
+//struct EXCHANGEMETER
+//{
+//    unsigned char   ReqSequenc[REQSEQUENCLEN];
+//    int    ReqSequencIdx;
+//    unsigned char   RespStruct[RESPSTRUCRLEN];
+//    int    RespStructIdx;
+//};
+//#pragma pack (pop)
 
 struct TDateTime
 {

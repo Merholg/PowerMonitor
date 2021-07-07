@@ -88,6 +88,7 @@ PowerMeter::PowerMeter(QWidget *parent) :
 
     ui->buttonMeterAdd->setEnabled(false);
     ui->buttonMeterDelete->setEnabled(false);
+    ui->tableMeterDevices->setEnabled(false);
     //ui->buttonMeterClose->setEnabled(false);
 
     // подключение к кнопке Add действия
@@ -125,12 +126,40 @@ PowerMeter::~PowerMeter()
 
 void PowerMeter::on_actionDeviceDelete_triggered()
 {
-
+    ui->buttonMeterAdd->setEnabled(false);
+    ui->buttonMeterDelete->setEnabled(false);
+    ui->tableMeterDevices->setEnabled(false);
+    for(int i = ui->spinMeterAddressFROM->value(); i <= ui->spinMeterAddressTO->value(); ++i)
+    {
+//        QMap<int, DEVICEDATA>::iterator  itDevice;
+//        itDevice = m_DeviceTable.find(i);
+//        if(itDevice != m_DeviceTable.end())
+//        {
+//        }
+        m_DeviceTable.remove(i);
+    }
+    ui->buttonMeterAdd->setEnabled(true);
+    ui->buttonMeterDelete->setEnabled(true);
+    ui->tableMeterDevices->setEnabled(true);
 }
 
 void PowerMeter::on_actionDeviceAdd_triggered()
 {
-
+    ui->buttonMeterAdd->setEnabled(false);
+    ui->buttonMeterDelete->setEnabled(false);
+    ui->tableMeterDevices->setEnabled(false);
+    for(int i = ui->spinMeterAddressFROM->value(); i <= ui->spinMeterAddressTO->value(); ++i)
+    {
+//        QMap<int, DEVICEDATA>::iterator  itDevice;
+//        itDevice = m_DeviceTable.find(i);
+//        if(itDevice != m_DeviceTable.end())
+//        {
+//        }
+        m_DeviceTable.remove(i);
+    }
+    ui->buttonMeterAdd->setEnabled(true);
+    ui->buttonMeterDelete->setEnabled(true);
+    ui->tableMeterDevices->setEnabled(true);
 }
 
 void PowerMeter::on_spinMeterAddressFROM_valueChanged(int arg1)
@@ -153,6 +182,10 @@ void PowerMeter::RecvEndMeterSettings()
     QMap<QString, QSpinBox *>::const_iterator  itCombo;
     for(itCombo = m_ComboBoxes.constBegin(); itCombo != m_ComboBoxes.constEnd(); ++itCombo) emit SendMeterSettings(qMakePair(itCombo.key(), QString::number(itCombo.value()->value())));
     for(itCombo = m_ComboBoxes.constBegin(); itCombo != m_ComboBoxes.constEnd(); ++itCombo) itCombo.value()->setEnabled(true);
+
+    ui->buttonMeterAdd->setEnabled(true);
+    ui->buttonMeterDelete->setEnabled(true);
+    ui->tableMeterDevices->setEnabled(true);
 }
 
 void PowerMeter::RecvMeterSettings(QPair<QString, QString> arg1)
