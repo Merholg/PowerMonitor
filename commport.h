@@ -34,8 +34,8 @@ private slots:
     void on_actionPortReConnection_triggered(); //нажатие кнопки (Re)Connect
     void RecvPortSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
-    void RecvResponseData(); // чтение данных из порта и отправка их сигналом SendReadedData
     void RecvRequestData(QByteArray arg1, QList<int> arg2); // запрос на нередачу данных и последующий прием ожидаемого количества байт
+    void RecvResponseData(); // чтение данных из порта и отправка их сигналом SendResponseData
     void RecvOccurredError(); // cообщение об ошибке во время работы с экземпляром порта
     void RecvAboutToClose(); // сообщение в статусбар при закрытии порта
 
@@ -44,9 +44,9 @@ public slots:
 
 signals:
     void SendPortSection(QString arg1); //передать название секции с параметрами компорта в экз. ini файла
-    void SendPortSettings(QPair<QString, QString> arg1); // записать установленное значение
+    void SendPortSettings(QPair<QString, QString> arg1); // записать установленное значение в файл ini
     void SendResponseData(QByteArray arg1, int arg2, QString arg3); // отправить полученные данные
-    void SendStatusString(QString arg1); // отправка строки в статусбар
+    void SendStatusString(QString arg1); // отправка строки состояния в статусбар
 
 private:
     Ui::CommPort *ui;

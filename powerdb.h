@@ -19,16 +19,19 @@ public:
     ~PowerDB();
 
 private slots:
-    void on_actionDBReConnection_triggered();
-    void RecvDBSettings(QPair<QString, QString> arg1);
-    void RecvEndDBSettings();
+    void on_actionDBReConnection_triggered(); //нажатие кнопки (Re)Connect
+    void RecvDBSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
+    void RecvEndDBSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
+    void RecvRequestData(данные для дб); // запрос на нередачу данных
 
 public slots:
-    void RecvDBIniSettings();
+    void RecvDBIniSettings(); // получить сигнал на начало работы и SendDBSection(QString arg1)
 
 signals:
-    void SendDBSection(QString arg1);
-    void SendDBSettings(QPair<QString, QString> arg1);
+    void SendDBSection(QString arg1);  //передать название секции с параметрами базы данных в экз. ini файла
+    void SendDBSettings(QPair<QString, QString> arg1); // записать установленное значение в файл ini
+    void SendResponseData(данные из дб); // отправить полученные данные
+    void SendStatusString(QString arg1); // отправка строки состояния в статусбар
 
 private:
     Ui::PowerDB *ui;
