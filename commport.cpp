@@ -118,6 +118,11 @@ CommPort::~CommPort()
     delete ui;
 }
 
+void CommPort::RecvClearWaitResponceFlag()
+{
+    m_WaitResponceFlag = false;
+}
+
 void CommPort::RecvAboutToClose()
 {
     emit SendStatusString(QString("Port %1 close").arg(m_SerialPort->portName()));
@@ -137,7 +142,8 @@ void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
     // получив сигнал на запрос значения переменной сохраняем в m_ExpectedBytes массив ожидаемых длин возвращаемого значения и отсылаем байтмассив запроса
     // если порт не открыт либо ошибка записи - немедленно излучается сигнал SendResponseData содержащий пустой байтмассив и сообщения об ошибке
     // иначе SendResponseData излучается когда будут получены данные ответа на запрос
-    QByteArray ReadBytes;
+    QByteArray ReadBytes("");
+    m_WaitResponceFlag = false;
     m_ExpectedBytes.clear();
     if(m_SerialPort->isOpen())
     {
@@ -149,13 +155,14 @@ void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
             m_ExpectedBytes.clear();
             emit SendResponseData(ReadBytes, -2, "Port write error"); // m_SerialPort->errorString() мб прибита в RecvOccurredError через  m_SerialPort->clearError();
         }
+        else m_WaitResponceFlag = true; // удалось отправить последовательность - установка флага разрешения ожидания ответа
     }
     else emit SendResponseData(ReadBytes, -1, "Port not open");
 }
 
 void CommPort::RecvResponseData()
 {
-    QByteArray ReadBytes;
+    QByteArray ReadBytes("");
     int ErrNumber = 0;
     QString ErrString = "";
     int intIndex = m_ExpectedBytes.indexOf(m_SerialPort->bytesAvailable());
@@ -178,7 +185,11 @@ void CommPort::RecvResponseData()
     }
     m_SerialPort->clear(QSerialPort::AllDirections);
     m_ExpectedBytes.clear();
-    emit SendResponseData(ReadBytes, ErrNumber, ErrString);
+    if(m_WaitResponceFlag) // Если ответ еще ожидается
+    {
+        m_WaitResponceFlag = false;
+        emit SendResponseData(ReadBytes, ErrNumber, ErrString);
+    }
 }
 
 void CommPort::on_actionPortReConnection_triggered() // нажатие кнопки Port ReConnect

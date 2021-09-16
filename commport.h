@@ -34,10 +34,11 @@ private slots:
     void on_actionPortReConnection_triggered(); //нажатие кнопки (Re)Connect
     void RecvPortSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
-    void RecvRequestData(QByteArray arg1, QList<int> arg2); // запрос на нередачу данных и последующий прием ожидаемого количества байт
+    void RecvRequestData(QByteArray arg1, QList<int> arg2); // запрос на нередачу данных и последующий прием ожидаемого количества байт, предполагается неск. вариантов длины возвращаемой последовательности
     void RecvResponseData(); // чтение данных из порта и отправка их сигналом SendResponseData
     void RecvOccurredError(); // cообщение об ошибке во время работы с экземпляром порта
     void RecvAboutToClose(); // сообщение в статусбар при закрытии порта
+    void RecvClearWaitResponceFlag(); // очистка флага ожидания ответа внешнего устройства (ответ более не ожидается)
 
 public slots:
     void RecvPortIniSettings(); // получить сигнал на начало работы и SendPortSection(QString arg1)
@@ -45,7 +46,7 @@ public slots:
 signals:
     void SendPortSection(QString arg1); //передать название секции с параметрами компорта в экз. ini файла
     void SendPortSettings(QPair<QString, QString> arg1); // записать установленное значение в файл ini
-    void SendResponseData(QByteArray arg1, int arg2, QString arg3); // отправить полученные данные
+    void SendResponseData(QByteArray arg1, int arg2, QString arg3); // отправить полученные данные - строку данных, номер ошибки (0 нет ошибки), строка описания ошибки
     void SendStatusString(QString arg1); // отправка строки состояния в статусбар
 
 private:
@@ -58,6 +59,7 @@ private:
     QMap<int, QSerialPortInfo> m_SerialPorts; // список существующих портов
     QList<int> m_ExpectedBytes; // варианты ожидаемого количества байт при  приеме
 //    QByteArray m_ReadBytes; // массив с прочитанными данными
+    bool m_WaitResponceFlag; // if true ожидается ответ внешнего устройства
 
 };
 
