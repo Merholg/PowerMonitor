@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QErrorMessage>
 #include <QDebug>
+#include <QTimer>
 //#include <algorithm>
 
 struct PORTSET
@@ -34,11 +35,11 @@ private slots:
     void on_actionPortReConnection_triggered(); //нажатие кнопки (Re)Connect
     void RecvPortSettings(QPair<QString, QString> arg1); //получает пару ключ - значение по ключу проверяет значение на валидность и пытается сделать его текущим
     void RecvEndPortSettings(); //получение - признак завершения передачи начальных установок (все существующие установки переданы) - разрешает ручное редактирование и соединение с установленными параметрами
-    void RecvRequestData(QByteArray arg1, QList<int> arg2); // запрос на нередачу данных и последующий прием ожидаемого количества байт, предполагается неск. вариантов длины возвращаемой последовательности
-    void RecvResponseData(); // чтение данных из порта и отправка их сигналом SendResponseData
+    void RecvRequestData(QByteArray arg1, QList<int> arg2, int arg3); // запрос на нередачу данных arg1 , ожидаемая длина ответа в байтах байт arg2 (возможно неск. вариантов длины возвращаемой последовательности) и timeout arg3
+    void RecvResponceTimeout(); // истечение времени ожидания (ответ возвращается в любом случае)
+    void RecvResponseData(); // чтение из порта данных до ожидаемой длины или истечения времени ожидания и отправка их сигналом SendResponseData
     void RecvOccurredError(); // cообщение об ошибке во время работы с экземпляром порта
     void RecvAboutToClose(); // сообщение в статусбар при закрытии порта
-    void RecvClearWaitResponceFlag(); // очистка флага ожидания ответа внешнего устройства (ответ более не ожидается)
 
 public slots:
     void RecvPortIniSettings(); // получить сигнал на начало работы и SendPortSection(QString arg1)
@@ -59,7 +60,7 @@ private:
     QMap<int, QSerialPortInfo> m_SerialPorts; // список существующих портов
     QList<int> m_ExpectedBytes; // варианты ожидаемого количества байт при  приеме
 //    QByteArray m_ReadBytes; // массив с прочитанными данными
-    bool m_WaitResponceFlag; // if true ожидается ответ внешнего устройства
+    bool m_WaitResponceFlag; // флаг ожидания ответа внешнего устройства (не принято ожидаемое количество байт и не настал timeout
 
 };
 

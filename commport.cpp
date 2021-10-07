@@ -50,6 +50,9 @@ CommPort::CommPort(QWidget *parent) :
     ui(new Ui::CommPort),
     m_SerialPort(new QSerialPort(this))
 {
+    m_WaitResponceFlag = false; // инициализация
+    m_ExpectedBytes.clear();
+
     //зарядка указателей на гуй элементы
     ui->setupUi(this);
     m_ComboBoxes.insert("Port", ui->comboPortName);
@@ -118,11 +121,6 @@ CommPort::~CommPort()
     delete ui;
 }
 
-void CommPort::RecvClearWaitResponceFlag()
-{
-    m_WaitResponceFlag = false;
-}
-
 void CommPort::RecvAboutToClose()
 {
     emit SendStatusString(QString("Port %1 close").arg(m_SerialPort->portName()));
@@ -137,9 +135,9 @@ void CommPort::RecvOccurredError()
     delete errorMessage;
 }
 
-void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
+void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2, int arg3)
 {
-    // получив сигнал на запрос значения переменной сохраняем в m_ExpectedBytes массив ожидаемых длин возвращаемого значения и отсылаем байтмассив запроса
+    // получив сигнал на запрос значения переменной сохраняет в m_ExpectedBytes массив ожидаемых длин возвращаемого значенияб устанавливает флаг ожидания ответа m_WaitResponceFlag и отсылаем байтмассив запроса
     // если порт не открыт либо ошибка записи - немедленно излучается сигнал SendResponseData содержащий пустой байтмассив и сообщения об ошибке
     // иначе SendResponseData излучается когда будут получены данные ответа на запрос
     QByteArray ReadBytes("");
@@ -156,8 +154,23 @@ void CommPort::RecvRequestData(QByteArray arg1, QList<int> arg2)
             emit SendResponseData(ReadBytes, -2, "Port write error"); // m_SerialPort->errorString() мб прибита в RecvOccurredError через  m_SerialPort->clearError();
         }
         else m_WaitResponceFlag = true; // удалось отправить последовательность - установка флага разрешения ожидания ответа
+        QTimer::singleShot(arg3, this, SLOT(RecvResponceTimeout())); // запуск таймера отсчета времени ожидания
     }
     else emit SendResponseData(ReadBytes, -1, "Port not open");
+}
+
+void CommPort::RecvResponceTimeout()
+{
+    QByteArray ReadBytes("");
+    int ErrNumber = -5;
+    QString ErrString = "TimeOut reached";
+    m_SerialPort->clear(QSerialPort::AllDirections);
+    m_ExpectedBytes.clear();
+    if(m_WaitResponceFlag) // Если ответ еще ожидается
+    {
+        m_WaitResponceFlag = false;
+        emit SendResponseData(ReadBytes, ErrNumber, ErrString);
+    }
 }
 
 void CommPort::RecvResponseData()
